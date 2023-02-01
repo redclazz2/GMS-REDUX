@@ -31,7 +31,6 @@ namespace GMS_CSharp_Server
         public int team;
         public int teamPos;
         static readonly object lockname = new();
-        public bool alive;
         CancellationTokenSource myCancelSource = new CancellationTokenSource();
 
         /// <summary>
@@ -40,7 +39,6 @@ namespace GMS_CSharp_Server
         public void StartClient(TcpClient client, Server server)
         {
             //Sets client variable.
-            alive = true;
             MscClient = client;
             MscClient.SendBufferSize = NetworkConfig.BufferSize;
             MscClient.ReceiveBufferSize = NetworkConfig.BufferSize;
@@ -190,7 +188,7 @@ namespace GMS_CSharp_Server
                                 Console.WriteLine(Convert.ToString(ParentServer?.Clients?.Count) + " clients online.");
                                 Console.WriteLine("Sending Client Data To GameMaker...");
 
-                                BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                                BufferStream buffer = new (NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 
                                 buffer.Seek(0);
                                 buffer.Write((UInt16)253);

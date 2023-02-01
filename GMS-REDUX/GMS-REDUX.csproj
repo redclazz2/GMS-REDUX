@@ -6,6 +6,7 @@
     <RootNamespace>GMS_REDUX</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <StartupObject>GMS_CSharp_Server.Program</StartupObject>
   </PropertyGroup>
 
 </Project>
