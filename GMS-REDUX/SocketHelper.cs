@@ -19,7 +19,6 @@ namespace GMS_CSharp_Server
         Queue<BufferStream> WriteQueue = new Queue<BufferStream>();
         public Thread? ReadThread;
         public Thread? WriteThread;
-        public Thread? AbortThread;
         public TcpClient? MscClient;
         public Server? ParentServer;
         public string? ClientIPAddress;

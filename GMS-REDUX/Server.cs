@@ -182,6 +182,8 @@ namespace GMS_CSharp_Server
                 Lobbies?.Remove(lobby);
                 if (WaitingLobbies != null && WaitingLobbies.Contains(lobby)) WaitingLobbies?.Remove(lobby);
                 else ReadyLobbies?.Remove(lobby);
+
+                Console.WriteLine("Lobby: " + lobby.lobbyId + " Has been removed from server's lists.");
             }
         }
 

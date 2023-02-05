@@ -13,7 +13,6 @@ namespace GMS_CSharp_Server
     public class Lobby
     {
         public Thread? ControlThread;
-        public Thread? AbortThread;
         public List<SocketHelper>? LobbyClients;
         public int lobbyId;
         public String? lobbyStatus;
@@ -23,10 +22,12 @@ namespace GMS_CSharp_Server
         Random rnd = new Random();
         static readonly object lockname = new();
 
-        /// <summary>
-        /// Lobby's Variables and Lists Init
-        /// </summary>
-        public void SetupLobby(Server myServer) 
+		CancellationTokenSource myCancelSource = new CancellationTokenSource();
+
+		/// <summary>
+		/// Lobby's Variables and Lists Init
+		/// </summary>
+		public void SetupLobby(Server myServer) 
         {
             lobbyStatus = "WAITING";
             this.myServer = myServer;
@@ -37,25 +38,10 @@ namespace GMS_CSharp_Server
             //Starts a Control Thread for the lobby
             ControlThread = new Thread(new ThreadStart(delegate
             {
-                SortTeams();
+                SortTeams(myCancelSource.Token);
             }));
             ControlThread.Start();
             Console.WriteLine("Lobby control thread started for: " + lobbyId);
-        }
-
-        /// <summary>
-        /// Handles aborting of threads.
-        /// </summary>
-        public void Abort()
-        {
-            //Stops Threads
-            ControlThread?.Interrupt();
-            Console.WriteLine("Control thread aborted on lobby: " + lobbyId);
-
-            myServer?.RemoveLobby(this);
-            GC.Collect();
-            AbortThread?.Interrupt();
-            
         }
 
         /// <summary>
@@ -93,7 +79,7 @@ namespace GMS_CSharp_Server
                         {
                             buffer.Seek(0);
                             buffer.Write((UInt16)11);
-                            WriteClientIpPortBuffer(player,buffer);
+							WriteClientIpPortBuffer(player,buffer);
                             client.SendMessage(buffer);
                         }
 
@@ -108,7 +94,7 @@ namespace GMS_CSharp_Server
 
                     foreach (SocketHelper client in LobbyClients) //WRITES EVEY IP AND PORT IN LOBBY
                     {
-                        WriteClientIpPortBuffer(client, buffer2);
+						WriteClientIpPortBuffer(client, buffer2);
                     }
 
                     player.SendMessage(buffer2); //SENDS IT
@@ -150,10 +136,10 @@ namespace GMS_CSharp_Server
         /// <summary>
         /// Generates Teams And Starts the Match
         /// </summary>
-        public void SortTeams() 
+        public void SortTeams(CancellationToken myToken) 
         {
             Thread.Sleep(60);
-            while(lobbyStatus != "READY") 
+            while(lobbyStatus != "READY" && !myToken.IsCancellationRequested) 
             {
                 Monitor.Enter(lockname);
 
@@ -164,30 +150,36 @@ namespace GMS_CSharp_Server
 
                     int colorCombination = rnd.Next(1, 5),
                         musicToPlay = rnd.Next(1, 3),
-                        counterTeam1 = 0, counterTeam2 = 0,
-                        n = maxClients / 2;
+                        counterTeam1 = 0, counterTeam2 = 0, selector = 0;
 
                     foreach (SocketHelper client in LobbyClients)
                     {
-                        var buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
-                        int selector = rnd.Next(1, 3);
+						var currentTeamDiff = counterTeam1 - counterTeam2;
 
-                        buff.Seek(0);
-                        buff.Write((UInt16)15);
-                        buff.Write((UInt16)colorCombination);
-                        buff.Write((UInt16)musicToPlay);
+                        if (currentTeamDiff == 0) selector = rnd.Next(1, 3);
+                        else if (currentTeamDiff == - 1) selector = 1;
+                        else if (currentTeamDiff == 1) selector = 2;
 
-                        if (selector == 1 && counterTeam1 < n)
+						var buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+
+						buff.Seek(0);
+						buff.Write((UInt16)15);
+						buff.Write((UInt16)colorCombination);
+						buff.Write((UInt16)musicToPlay);
+
+						switch (selector)
                         {
-                            client.team = 1;
-                            client.teamPos = counterTeam1;
-                            counterTeam1++;
-                        }
-                        else if (selector == 2 && counterTeam2 < n)
-                        {
-                            client.team = 2;
-                            client.teamPos = counterTeam2;
-                            counterTeam2++;
+                            case 1:
+								client.team = 1;
+								client.teamPos = counterTeam1;
+								counterTeam1++;
+								break;
+
+                            case 2:
+								client.team = 2;
+								client.teamPos = counterTeam2;
+								counterTeam2++;
+								break;
                         }
 
                         buff.Write((UInt16)client.team);
@@ -197,7 +189,8 @@ namespace GMS_CSharp_Server
 					Monitor.Exit(lockname);
 					
                 }                
-            }           
+            }
+            Console.WriteLine("Lobby Control Thread has been properly cancelled.");
         }
 
         /// <summary>
@@ -219,27 +212,23 @@ namespace GMS_CSharp_Server
                 {
                     buffer.Seek(0);
                     buffer.Write((UInt16)14);
-                    WriteClientIpPortBuffer(player,buffer);
+					WriteClientIpPortBuffer(player,buffer);
                     client.SendMessage(buffer);
                 }
 
                 if (LobbyClients?.Count == 0)
                 {
-                    //Starts an abort thread.
-                    AbortThread = new Thread(new ThreadStart(delegate
-                    {
-                        Abort();
-                    }));
-                    Console.WriteLine("Aborting threads on lobby: " + lobbyId);
-                    AbortThread.Start();
-                }
+					myCancelSource.Cancel();
+					Console.WriteLine("Cancellation Token Active on Lobby: " + lobbyId);
+					myServer?.RemoveLobby(this);
+				}
             }
         }
 
         /// <summary>
         /// Writes Client Data (Ip,Port) in a Buffer.
         /// </summary>
-        public void WriteClientIpPortBuffer(SocketHelper client, BufferStream buffer)
+        public static void WriteClientIpPortBuffer(SocketHelper client, BufferStream buffer)
         {
             buffer?.Write(client?.ClientIPAddress);
             buffer?.Write(client?.ClientPort);
