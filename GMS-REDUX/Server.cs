@@ -20,11 +20,12 @@ namespace GMS_CSharp_Server
         TcpListener? TCPListener = null;
 
         static readonly object lockname = new();
+		CancellationTokenSource myCancelSource = new CancellationTokenSource();
 
-        /// <summary>
-        /// Starts the server.
-        /// </summary>
-        public void StartServer(int tcpPort)
+		/// <summary>
+		/// Starts the server.
+		/// </summary>
+		public void StartServer(int tcpPort)
         {
             //Creates a client list.
             Clients = new List<SocketHelper>();
@@ -36,7 +37,7 @@ namespace GMS_CSharp_Server
             //Starts a listen thread to listen for connections.
             TCPThread = new Thread(new ThreadStart(delegate
             {
-                Listen(tcpPort);
+                Listen(tcpPort,myCancelSource.Token);
             }));
             TCPThread.Start();
             Console.WriteLine("Listen thread started.");
@@ -44,7 +45,7 @@ namespace GMS_CSharp_Server
             //Starts a matchmaking thread to create lobbies.
             MatchmakingThread = new Thread(new ThreadStart(delegate
             {
-                Matchmaking();
+                Matchmaking(myCancelSource.Token);
             }));
             MatchmakingThread.Start();
             Console.WriteLine("Matchmaking thread started.");
@@ -52,7 +53,7 @@ namespace GMS_CSharp_Server
             //Starts a thread to handle ping to all connected clients
             PingThread = new Thread(new ThreadStart(delegate
             {
-                SendPingToAllClients();
+                SendPingToAllClients(myCancelSource.Token);
 			}));
             PingThread.Start();
             Console.WriteLine("Ping Thread Started.");
@@ -63,9 +64,12 @@ namespace GMS_CSharp_Server
         /// </summary>
         public void StopServer()
         {
-            TCPListener?.Stop();
-            TCPThread?.Interrupt();
-            MatchmakingThread?.Interrupt();
+            myCancelSource.Cancel();
+
+            //TCPListener?.Stop();
+            //TCPThread?.Interrupt();
+            //MatchmakingThread?.Interrupt();
+
             if(Clients != null)
                 foreach (SocketHelper client in Clients)
                 {
@@ -96,12 +100,12 @@ namespace GMS_CSharp_Server
         /// <summary>
         /// Listens for clients and starts threads to handle them.
         /// </summary>
-        private void Listen(int port)
+        private void Listen(int port, CancellationToken myToken)
         {
             TCPListener = new TcpListener(IPAddress.Any, port);
             TCPListener.Start();
 
-            while (true)
+            while (!myToken.IsCancellationRequested)
             {
                 Thread.Sleep(10);
                 TcpClient tcpClient = TCPListener.AcceptTcpClient();
@@ -110,14 +114,15 @@ namespace GMS_CSharp_Server
                 helper.StartClient(tcpClient, this);
                 Clients?.Add(helper);
             }
+            Console.WriteLine("Listen Thread has been cancelled on main server!");
         }
 
         /// <summary>
         /// Handles matchmaking between clients searching for games.
         /// </summary>
-        public void Matchmaking()
+        public void Matchmaking(CancellationToken myToken)
         {
-            while (true)
+            while (!myToken.IsCancellationRequested)
             {
                 Thread.Sleep(10);
                 if (SearchingClients?.Count > 0)
@@ -144,8 +149,9 @@ namespace GMS_CSharp_Server
                     }
                 }
             }
+			Console.WriteLine("Matchmaking Thread has been cancelled on main server!");
 
-            void CreateNewLobby(SocketHelper client)
+			void CreateNewLobby(SocketHelper client)
             {
                 Console.WriteLine("\nCreating a new lobby...");
 
@@ -202,8 +208,9 @@ namespace GMS_CSharp_Server
         /// <summary>
         /// This function sends a ping signal to all clients every 5 seconds.
         /// </summary>
-        public void SendPingToAllClients(){
-            while (true){
+        public void SendPingToAllClients(CancellationToken myToken)
+		{
+            while (!myToken.IsCancellationRequested){
 				Thread.Sleep(6000);
 				BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
                 buffer.Seek(0);
@@ -211,6 +218,7 @@ namespace GMS_CSharp_Server
                 SendToAllClients(buffer);
                 Console.WriteLine("Ping sent to all clients!");
             }
+			Console.WriteLine("Ping Thread has been cancelled on main server!");
 		}
     }
 }
