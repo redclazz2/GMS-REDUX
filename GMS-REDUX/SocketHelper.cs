@@ -19,17 +19,24 @@ namespace GMS_CSharp_Server
         Queue<BufferStream> WriteQueue = new Queue<BufferStream>();
         public Thread? ReadThread;
         public Thread? WriteThread;
-        public TcpClient? MscClient;
+
         public Server? ParentServer;
+        public Lobby? GameLobby;
+
+        public TcpClient? MscClient;
+
         public string? ClientIPAddress;
         public string? ClientPort;
-        public int ClientNumber;
-        public Lobby? GameLobby;
+        public string? ClientUDPPort;
+        public string? ClientUsername;
+
         public bool IsSearching;
         public bool IsIngame;
         public int team;
         public int teamPos;
-        static readonly object lockname = new();
+		public int ClientNumber;
+
+		static readonly object lockname = new();
         CancellationTokenSource myCancelSource = new CancellationTokenSource();
 
         /// <summary>
@@ -173,12 +180,11 @@ namespace GMS_CSharp_Server
                     NetworkStream stream = client.GetStream();
                     stream.Read(readBuffer.Memory, 0, NetworkConfig.BufferSize);
 
-                    //Read the header data.
-                    ushort constant;
-                    readBuffer.Read(out constant);
+					//Read the header data.
+					readBuffer.Read(out ushort constant);
 
-                    //Determine input commmand.
-                    switch (constant)
+					//Determine input commmand.
+					switch (constant)
                     {
                         //Complete Client's Handshake
                         case 255:
@@ -194,7 +200,9 @@ namespace GMS_CSharp_Server
                                 buffer.Write(ClientIPAddress);
                                 buffer.Write(ClientPort);
                                 SendMessage(buffer);
-                                break;
+
+								Console.WriteLine("Client Data has been sent to GameMaker!");
+								break;
                             }
 
                         //Matchmaking requested by client
@@ -205,15 +213,15 @@ namespace GMS_CSharp_Server
                                     ParentServer?.AddPlayerToMatchMaking(this);
                                     IsSearching = true;
                                     IsIngame = false;
-                                    Console.WriteLine("\nMatchmaking request received from: " + ClientIPAddress + ". Client was added to queue.");
-                                    Console.WriteLine("Sending Client Data To GameMaker...");
 
                                     //Send matchmaking confirmed by server to gm
                                     BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
                                     buffer.Seek(0);
                                     buffer.Write((UInt16)4);
                                     SendMessage(buffer);
-                                    break;
+
+									Console.WriteLine("\nMatchmaking request received from: " + ClientIPAddress + ". Client was added to queue.");
+									break;
                                 }
                             }
 
@@ -227,6 +235,13 @@ namespace GMS_CSharp_Server
                                 buffer.Seek(0);
                                 buffer.Write((UInt16)13);
                                 SendMessage(buffer);
+                                break;
+                            }
+
+                        case 13:
+                            {
+                                readBuffer.Read(out ClientUsername);
+                                Console.WriteLine($"Username has been read from: {ClientIPAddress} as: {ClientUsername}!");
                                 break;
                             }
 

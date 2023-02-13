@@ -15,9 +15,11 @@ namespace GMS_CSharp_Server
         public List<Lobby>? ReadyLobbies;
         public Queue<SocketHelper>? SearchingClients;
         Thread? TCPThread;
+        Thread? UDPThread;
         Thread? MatchmakingThread;
         Thread? PingThread;
         TcpListener? TCPListener = null;
+        UdpClient? UDPClient = null;
 
         static readonly object lockname = new();
 		CancellationTokenSource myCancelSource = new CancellationTokenSource();
@@ -40,7 +42,14 @@ namespace GMS_CSharp_Server
                 Listen(tcpPort,myCancelSource.Token);
             }));
             TCPThread.Start();
-            Console.WriteLine("Listen thread started.");
+            Console.WriteLine("TCP Listen thread started.");
+
+            UDPThread = new Thread(new ThreadStart(delegate
+            {
+                ListenUDP(tcpPort, myCancelSource.Token);    
+            }));
+            //UDPThread.Start();
+            Console.WriteLine("UDP Listen thread started.");
 
             //Starts a matchmaking thread to create lobbies.
             MatchmakingThread = new Thread(new ThreadStart(delegate
@@ -117,17 +126,51 @@ namespace GMS_CSharp_Server
             Console.WriteLine("Listen Thread has been cancelled on main server!");
         }
 
-        /// <summary>
-        /// Handles matchmaking between clients searching for games.
-        /// </summary>
-        public void Matchmaking(CancellationToken myToken)
+		/// <summary>
+		/// Listens for UDP Datagrams and sets proper UDP port to client.
+		/// </summary>
+		private void ListenUDP(int port, CancellationToken myToken)
+		{
+			UDPClient = new UdpClient(port);
+            IPEndPoint groupEp = new IPEndPoint(IPAddress.Any, port);
+			
+			while (!myToken.IsCancellationRequested)
+			{
+                Thread.Sleep(10);
+				Console.WriteLine("Waiting for broadcast");
+				UDPClient.Receive(ref groupEp);
+
+                string[] format = groupEp.ToString()?.Split(':');
+				string ClientIPAddress = format?[0];
+				string ClientPort = format?[1];
+
+				if (Clients != null)
+                foreach (SocketHelper client in Clients){
+                    if(client.ClientIPAddress == ClientIPAddress){
+                            client.ClientUDPPort = ClientPort;
+
+							Console.WriteLine($"Recieved UDP Data from client: {ClientIPAddress}. " +
+                                $"\nThe TCP Port of Client is: {client.ClientPort}. " +
+                                $"\nThe UDP Port of Client is: {client.ClientUDPPort} ");
+                    }
+                }
+			}
+			Console.WriteLine("UDP Listen Thread has been cancelled on main server!");
+		}
+
+		/// <summary>
+		/// Handles matchmaking between clients searching for games.
+		/// </summary>
+		public void Matchmaking(CancellationToken myToken)
         {
             while (!myToken.IsCancellationRequested)
             {
                 Thread.Sleep(10);
                 if (SearchingClients?.Count > 0)
                 {
-                    if (WaitingLobbies?.Count == 0)
+					Console.WriteLine("Matchmaking Has been tested!");
+
+					if (WaitingLobbies?.Count == 0)
                     {
                         CreateNewLobby(SearchingClients.Dequeue());
                     }
@@ -147,7 +190,10 @@ namespace GMS_CSharp_Server
                         if (count == WaitingLobbies?.Count)
                             CreateNewLobby(SearchingClients.Dequeue());
                     }
-                }
+
+					Console.WriteLine("If Condition Has Ended.");
+
+				}
             }
 			Console.WriteLine("Matchmaking Thread has been cancelled on main server!");
 

@@ -48,10 +48,9 @@ namespace GMS_CSharp_Server
         /// Lets a client try joining a lobby. If the player is the first to join it wont need confirmation
         /// otherwise, it wont be added to the client list.
         /// </summary>
-        public void AddNonConfPlayer(SocketHelper player) 
+        public void AddNonConfPlayer(SocketHelper player)
         {
-            Monitor.Enter(lockname);
-            try
+            lock (lockname)
             {
                 player.GameLobby = this;
                 if (LobbyClients != null)
@@ -74,12 +73,12 @@ namespace GMS_CSharp_Server
                     //Sends Joining Player's Data to Others
                     BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 
-                    if(LobbyClients != null)
+                    if (LobbyClients != null)
                         foreach (SocketHelper client in LobbyClients)
                         {
                             buffer.Seek(0);
                             buffer.Write((UInt16)11);
-							WriteClientIpPortBuffer(player,buffer);
+                            WriteClientIpPortBuffer(player, buffer);
                             client.SendMessage(buffer);
                         }
 
@@ -94,18 +93,14 @@ namespace GMS_CSharp_Server
 
                     foreach (SocketHelper client in LobbyClients) //WRITES EVEY IP AND PORT IN LOBBY
                     {
-						WriteClientIpPortBuffer(client, buffer2);
+                        WriteClientIpPortBuffer(client, buffer2);
                     }
 
                     player.SendMessage(buffer2); //SENDS IT
                 }
             }
-            finally
-            {
-                Monitor.Exit(lockname);
-            }
 
-            void sendLobbyData(UInt16 constant_out) 
+			void sendLobbyData(UInt16 constant_out) 
             {
                 Console.WriteLine("Sending Data to: " + player.ClientIPAddress);
                 BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
