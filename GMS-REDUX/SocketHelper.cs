@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Net.Sockets;
 
 namespace GMS_CSharp_Server
 {
@@ -82,7 +73,7 @@ namespace GMS_CSharp_Server
         public void StartHandshake()
         {
             Console.WriteLine("\nStarting TCP Handshake with: " + ClientIPAddress);
-            BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+            BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
             buffer.Seek(0);
             UInt16 constant_out = 254;
             buffer.Write(constant_out);
@@ -176,7 +167,7 @@ namespace GMS_CSharp_Server
                 try
                 {
                     Thread.Sleep(10);
-                    BufferStream readBuffer = new BufferStream(NetworkConfig.BufferSize, 1);
+                    BufferStream readBuffer = new(NetworkConfig.BufferSize, 1);
                     NetworkStream stream = client.GetStream();
                     stream.Read(readBuffer.Memory, 0, NetworkConfig.BufferSize);
 
@@ -215,7 +206,7 @@ namespace GMS_CSharp_Server
                                     IsIngame = false;
 
                                     //Send matchmaking confirmed by server to gm
-                                    BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                                    BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
                                     buffer.Seek(0);
                                     buffer.Write((UInt16)4);
                                     SendMessage(buffer);

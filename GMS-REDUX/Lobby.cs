@@ -1,11 +1,4 @@
-﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
-
-namespace GMS_CSharp_Server
+﻿namespace GMS_CSharp_Server
 {
     /// <summary>
     /// Handles sessions of clients.
@@ -19,10 +12,10 @@ namespace GMS_CSharp_Server
         public Server? myServer;
         public int maxClients = 1;
 
-        Random rnd = new Random();
+        Random rnd = new();
         static readonly object lockname = new();
 
-		CancellationTokenSource myCancelSource = new CancellationTokenSource();
+		CancellationTokenSource myCancelSource = new();
 
 		/// <summary>
 		/// Lobby's Variables and Lists Init
@@ -71,7 +64,7 @@ namespace GMS_CSharp_Server
                     sendLobbyData(7);
 
                     //Sends Joining Player's Data to Others
-                    BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                    BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 
                     if (LobbyClients != null)
                         foreach (SocketHelper client in LobbyClients)
@@ -85,7 +78,7 @@ namespace GMS_CSharp_Server
                     Thread.Sleep(100);
 
                     //Sends Joining Player All Other User's Data
-                    BufferStream buffer2 = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                    BufferStream buffer2 = new (NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 
                     buffer2.Seek(0);
                     buffer2.Write((UInt16)9); //CONT
@@ -103,7 +96,7 @@ namespace GMS_CSharp_Server
 			void sendLobbyData(UInt16 constant_out) 
             {
                 Console.WriteLine("Sending Data to: " + player.ClientIPAddress);
-                BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
                 buffer.Seek(0);
                 buffer.Write(constant_out);
                 buffer.Write((UInt16)lobbyId);
@@ -200,7 +193,7 @@ namespace GMS_CSharp_Server
                 player.ClientNumber = -1;
                 LobbyClients?.Remove(player);
 
-                BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 
                 if(LobbyClients != null)
                 foreach (SocketHelper client in LobbyClients)
