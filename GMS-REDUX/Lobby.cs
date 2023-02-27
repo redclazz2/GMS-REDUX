@@ -10,10 +10,10 @@
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 1;
+        public int maxClients = 2;
 
         Random rnd = new();
-        static readonly object lockname = new();
+        object lockname = new();
 
 		CancellationTokenSource myCancelSource = new();
 
@@ -130,53 +130,57 @@
             while(lobbyStatus != "READY" && !myToken.IsCancellationRequested) 
             {
                 Monitor.Enter(lockname);
+                try {
 
-                if (LobbyClients != null && LobbyClients.Count == maxClients)
-                {
-                    lobbyStatus = "READY";
-                    myServer?.UpdateLobbyListReady(this);
+					if (LobbyClients != null && LobbyClients.Count == maxClients)
+					{
+						lobbyStatus = "READY";
+						myServer?.UpdateLobbyListReady(this);
 
-                    int colorCombination = rnd.Next(1, 5),
-                        musicToPlay = rnd.Next(1, 3),
-                        counterTeam1 = 0, counterTeam2 = 0, selector = 0;
+						int colorCombination = rnd.Next(1, 5),
+							musicToPlay = rnd.Next(1, 3),
+							counterTeam1 = 0, counterTeam2 = 0, selector = 0;
 
-                    foreach (SocketHelper client in LobbyClients)
-                    {
-						var currentTeamDiff = counterTeam1 - counterTeam2;
+						foreach (SocketHelper client in LobbyClients)
+						{
+							var currentTeamDiff = counterTeam1 - counterTeam2;
 
-                        if (currentTeamDiff == 0) selector = rnd.Next(1, 3);
-                        else if (currentTeamDiff == - 1) selector = 1;
-                        else if (currentTeamDiff == 1) selector = 2;
+							if (currentTeamDiff == 0) selector = rnd.Next(1, 3);
+							else if (currentTeamDiff == -1) selector = 1;
+							else if (currentTeamDiff == 1) selector = 2;
 
-						var buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+							var buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 
-						buff.Seek(0);
-						buff.Write((UInt16)15);
-						buff.Write((UInt16)colorCombination);
-						buff.Write((UInt16)musicToPlay);
+							buff.Seek(0);
+							buff.Write((UInt16)15);
+							buff.Write((UInt16)colorCombination);
+							buff.Write((UInt16)musicToPlay);
 
-						switch (selector)
-                        {
-                            case 1:
-								client.team = 1;
-								client.teamPos = counterTeam1;
-								counterTeam1++;
-								break;
+							switch (selector)
+							{
+								case 1:
+									client.team = 1;
+									client.teamPos = counterTeam1;
+									counterTeam1++;
+									break;
 
-                            case 2:
-								client.team = 2;
-								client.teamPos = counterTeam2;
-								counterTeam2++;
-								break;
-                        }
+								case 2:
+									client.team = 2;
+									client.teamPos = counterTeam2;
+									counterTeam2++;
+									break;
+							}
 
-                        buff.Write((UInt16)client.team);
-                        buff.Write((UInt16)client.teamPos);
-                        client.SendMessage(buff);
+							buff.Write((UInt16)client.team);
+							buff.Write((UInt16)client.teamPos);
+							client.SendMessage(buff);
+						}
                     }
-					Monitor.Exit(lockname);
+                
+				
 					
-                }                
+                }
+                finally { Monitor.Exit(lockname); }           
             }
             Console.WriteLine("Lobby Control Thread has been properly cancelled.");
         }

@@ -17,7 +17,7 @@ namespace GMS_CSharp_Server
         TcpListener? TCPListener = null;
         UdpClient? UDPClient = null;
 
-        static readonly object lockname = new();
+        object lockname = new();
 		CancellationTokenSource myCancelSource = new CancellationTokenSource();
 
 		/// <summary>
@@ -171,22 +171,19 @@ namespace GMS_CSharp_Server
                         CreateNewLobby(SearchingClients.Dequeue());
                     }
                     else
-                    {
-                        int count = 0;
-                        if(WaitingLobbies != null)
-                            foreach (Lobby lobby in WaitingLobbies)
-                            {
-                                if (lobby.lobbyStatus == "WAITING")
-                                {
-                                    lobby.AddNonConfPlayer(SearchingClients.Dequeue());
-                                    break;
-                                }
-                                count++;
-                            }
-                        if (count == WaitingLobbies?.Count)
-                            CreateNewLobby(SearchingClients.Dequeue());
-                    }
+                    {                        
+                        for(int count = 0; count < WaitingLobbies.Count; count++) 
+                        {
+                            Lobby current = WaitingLobbies[count];
 
+							if (current.lobbyStatus == "WAITING")
+                            {
+                                current.AddNonConfPlayer(SearchingClients.Dequeue());
+                                count = WaitingLobbies.Count + 1;
+                            }
+                            count++;
+                            }
+                        }
 					Console.WriteLine("If Condition Has Ended.");
 
 				}

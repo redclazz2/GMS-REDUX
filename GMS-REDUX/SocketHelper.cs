@@ -27,7 +27,7 @@ namespace GMS_CSharp_Server
         public int teamPos;
 		public int ClientNumber;
 
-		static readonly object lockname = new();
+		object lockname = new();
         CancellationTokenSource myCancelSource = new CancellationTokenSource();
 
         /// <summary>
