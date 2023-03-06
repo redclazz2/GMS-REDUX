@@ -44,7 +44,7 @@ namespace GMS_CSharp_Server
             {
                 ListenUDP(tcpPort, myCancelSource.Token);    
             }));
-            //UDPThread.Start();
+            UDPThread.Start();
             Console.WriteLine("UDP Listen thread started.");
 
             //Starts a matchmaking thread to create lobbies.

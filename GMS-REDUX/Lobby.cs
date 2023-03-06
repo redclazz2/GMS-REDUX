@@ -175,10 +175,7 @@
 							buff.Write((UInt16)client.teamPos);
 							client.SendMessage(buff);
 						}
-                    }
-                
-				
-					
+                    }		
                 }
                 finally { Monitor.Exit(lockname); }           
             }
