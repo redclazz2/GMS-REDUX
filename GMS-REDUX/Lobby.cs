@@ -69,13 +69,14 @@
                     if (LobbyClients != null)
                         foreach (SocketHelper client in LobbyClients)
                         {
+                            Thread.Sleep(100);
                             buffer.Seek(0);
                             buffer.Write((UInt16)11);
                             WriteClientIpPortBuffer(player, buffer);
                             client.SendMessage(buffer);
                         }
 
-                    Thread.Sleep(100);
+                    Thread.Sleep(700);
 
                     //Sends Joining Player All Other User's Data
                     BufferStream buffer2 = new (NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
@@ -220,7 +221,7 @@
         public static void WriteClientIpPortBuffer(SocketHelper client, BufferStream buffer)
         {
             buffer?.Write(client?.ClientIPAddress);
-            buffer?.Write(client?.ClientPort);
+            buffer?.Write(client?.ClientUDPPort);
         }
     }
 }
