@@ -164,8 +164,6 @@ namespace GMS_CSharp_Server
                 Thread.Sleep(10);
                 if (SearchingClients?.Count > 0)
                 {
-					Console.WriteLine("Matchmaking Has been tested!");
-
 					if (WaitingLobbies?.Count == 0)
                     {
                         CreateNewLobby(SearchingClients.Dequeue());
@@ -181,11 +179,9 @@ namespace GMS_CSharp_Server
                                 current.AddNonConfPlayer(SearchingClients.Dequeue());
                                 count = WaitingLobbies.Count + 1;
                             }
-                            count++;
-                            }
+                            
                         }
-					Console.WriteLine("If Condition Has Ended.");
-
+                    }
 				}
             }
 			Console.WriteLine("Matchmaking Thread has been cancelled on main server!");
