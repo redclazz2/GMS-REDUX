@@ -138,7 +138,7 @@ namespace GMS_CSharp_Server
 
                 string[] format = groupEp.ToString()?.Split(':');
 				string ClientIPAddress = format?[0];
-				string ClientPort = ((IPEndPoint)UDPClient.Client.LocalEndPoint).Port.ToString();
+				string ClientPort = format?[1];
 
 				if (Clients != null)
                 foreach (SocketHelper client in Clients){
