@@ -153,13 +153,13 @@ namespace GMS_CSharp_Server
 						Console.WriteLine($"Recieved UDP Data from client: {ClientIPAddress}. " +
                             $"\nThe TCP Port of Client is: {client.ClientPort}. " +
                             $"\nThe UDP Port of Client is: {client.ClientUDPPort} ");
-					}
 
-					BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
-					buffer.Seek(0);
-					buffer.Write((UInt16)252);
-                    buffer.Write(dataFormat[1]);
-					client.SendMessage(buffer);
+						BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+						buffer.Seek(0);
+						buffer.Write((UInt16)252);
+						buffer.Write(dataFormat[1]);
+						client.SendMessage(buffer);
+					}
 				}
 			}
 			Console.WriteLine("UDP Listen Thread has been cancelled on main server!");
