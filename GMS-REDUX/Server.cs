@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Net;
+using System.Text;
 
 namespace GMS_CSharp_Server
 {
@@ -134,22 +135,32 @@ namespace GMS_CSharp_Server
 			{
                 Thread.Sleep(10);
 				Console.WriteLine("Waiting for broadcast");
-				UDPClient.Receive(ref groupEp);
-
-                string[] format = groupEp.ToString()?.Split(':');
-				string ClientIPAddress = format?[0];
-				string ClientPort = format?[1];
-
+               
+				string myData = Encoding.ASCII.GetString(UDPClient.Receive(ref groupEp));
+                string[] dataFormat = myData.Split('1',2);
+                dataFormat[1] = "1" + dataFormat[1];
+                Console.WriteLine(dataFormat[1]);
+				string[] format = groupEp.ToString()?.Split(':',2);
+				string ClientIPAddress = format?[0],
+                       ClientPort = format?[1];
+                
+ 
 				if (Clients != null)
                 foreach (SocketHelper client in Clients){
                     if(client.ClientIPAddress == ClientIPAddress){
-                            client.ClientUDPPort = ClientPort;
+                        client.ClientUDPPort = ClientPort;
 
-							Console.WriteLine($"Recieved UDP Data from client: {ClientIPAddress}. " +
-                                $"\nThe TCP Port of Client is: {client.ClientPort}. " +
-                                $"\nThe UDP Port of Client is: {client.ClientUDPPort} ");
-                    }
-                }
+						Console.WriteLine($"Recieved UDP Data from client: {ClientIPAddress}. " +
+                            $"\nThe TCP Port of Client is: {client.ClientPort}. " +
+                            $"\nThe UDP Port of Client is: {client.ClientUDPPort} ");
+					}
+
+					BufferStream buffer = new(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+					buffer.Seek(0);
+					buffer.Write((UInt16)252);
+                    buffer.Write(dataFormat[1]);
+					client.SendMessage(buffer);
+				}
 			}
 			Console.WriteLine("UDP Listen Thread has been cancelled on main server!");
 		}
