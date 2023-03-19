@@ -1,4 +1,6 @@
-﻿namespace GMS_CSharp_Server
+﻿using System.Text.Json;
+
+namespace GMS_CSharp_Server
 {
     /// <summary>
     /// Handles sessions of clients.
@@ -10,7 +12,7 @@
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 2;
+        public int maxClients = 1;
 
         Random rnd = new();
         object lockname = new();
@@ -132,50 +134,57 @@
             {
                 Monitor.Enter(lockname);
                 try {
+                    if (LobbyClients != null && LobbyClients.Count == maxClients)
+                    {
+                        lobbyStatus = "READY";
+                        myServer?.UpdateLobbyListReady(this);
 
-					if (LobbyClients != null && LobbyClients.Count == maxClients)
-					{
-						lobbyStatus = "READY";
-						myServer?.UpdateLobbyListReady(this);
+                        int colorCombination = rnd.Next(1, 5),
+                            musicToPlay = rnd.Next(1, 3),
+                            counterTeam1 = 0, counterTeam2 = 0, selector = 0,
+                            selectedTeam = 0, selectedPosition = 0, currentTeamDiff = 0;
 
-						int colorCombination = rnd.Next(1, 5),
-							musicToPlay = rnd.Next(1, 3),
-							counterTeam1 = 0, counterTeam2 = 0, selector = 0;
+                        BufferStream buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+						
+                        buff.Seek(0);
+						buff.Write((UInt16)15);
+						buff.Write((UInt16)colorCombination);
+						buff.Write((UInt16)musicToPlay);
 
-						foreach (SocketHelper client in LobbyClients)
+						string[][] myData = new string[maxClients][];
+
+						for (int i = 0; i < maxClients; i++)
 						{
-							var currentTeamDiff = counterTeam1 - counterTeam2;
+                            currentTeamDiff = counterTeam1 - counterTeam2;
 
 							if (currentTeamDiff == 0) selector = rnd.Next(1, 3);
 							else if (currentTeamDiff == -1) selector = 1;
 							else if (currentTeamDiff == 1) selector = 2;
 
-							var buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
-
-							buff.Seek(0);
-							buff.Write((UInt16)15);
-							buff.Write((UInt16)colorCombination);
-							buff.Write((UInt16)musicToPlay);
-
 							switch (selector)
 							{
 								case 1:
-									client.team = 1;
-									client.teamPos = counterTeam1;
+                                    selectedTeam = 1;
+									selectedPosition = counterTeam1;
 									counterTeam1++;
+                                    
 									break;
 
 								case 2:
-									client.team = 2;
-									client.teamPos = counterTeam2;
+									selectedTeam = 2;
+									selectedPosition = counterTeam2;
 									counterTeam2++;
 									break;
 							}
-
-							buff.Write((UInt16)client.team);
-							buff.Write((UInt16)client.teamPos);
-							client.SendMessage(buff);
+							myData[i] = new string[] 
+                                { LobbyClients[i].ClientIPAddress, LobbyClients[i].ClientUDPPort, selectedTeam.ToString(), selectedPosition.ToString() };
 						}
+
+                        string json = JsonSerializer.Serialize(myData);
+                        buff.Write(json);
+
+                        foreach(SocketHelper client in LobbyClients)
+                            client.SendMessage(buff);
                     }		
                 }
                 finally { Monitor.Exit(lockname); }           

@@ -139,7 +139,7 @@ namespace GMS_CSharp_Server
 				string myData = Encoding.ASCII.GetString(UDPClient.Receive(ref groupEp));
                 string[] dataFormat = myData.Split('1',2);
                 dataFormat[1] = "1" + dataFormat[1];
-                Console.WriteLine(dataFormat[1]);
+
 				string[] format = groupEp.ToString()?.Split(':',2);
 				string ClientIPAddress = format?[0],
                        ClientPort = format?[1];

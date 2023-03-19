@@ -23,8 +23,8 @@ namespace GMS_CSharp_Server
 
         public bool IsSearching;
         public bool IsIngame;
-        public int team;
-        public int teamPos;
+        //public int team;
+        //public int teamPos;
 		public int ClientNumber;
 
 		object lockname = new();
