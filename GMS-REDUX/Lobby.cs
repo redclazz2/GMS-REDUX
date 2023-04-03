@@ -150,6 +150,7 @@ namespace GMS_CSharp_Server
 		public void SortTeams(CancellationToken myToken) 
         {
             Thread.Sleep(60);
+            Console.WriteLine("Cf" + confirmationMessages);
             while(lobbyStatus != "READY" && !myToken.IsCancellationRequested) 
             {
                 Monitor.Enter(lockname);
