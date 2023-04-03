@@ -134,6 +134,7 @@ namespace GMS_CSharp_Server
 		public void AddConfirmationMessageValue()
 		{
             lock (lockname) {
+                Console.WriteLine("Conf Recieved!");
                 confirmationMessages++;
             }
 		}
