@@ -149,11 +149,11 @@ namespace GMS_CSharp_Server
 		/// </summary>
 		public void SortTeams(CancellationToken myToken) 
         {
-            Thread.Sleep(60);
-            Console.WriteLine("Cf" + confirmationMessages);
+            Thread.Sleep(60);       
             while(lobbyStatus != "READY" && !myToken.IsCancellationRequested) 
             {
-                Monitor.Enter(lockname);
+				Console.WriteLine("Cf" + confirmationMessages);
+				Monitor.Enter(lockname);
                 try {
                     if (LobbyClients != null && confirmationMessages == maxClients)
                     {
