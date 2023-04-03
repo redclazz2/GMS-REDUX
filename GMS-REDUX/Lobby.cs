@@ -133,15 +133,9 @@ namespace GMS_CSharp_Server
 		/// </summary>
 		public void AddConfirmationMessageValue()
 		{
-			Monitor.Enter(lockname);
-			try
-			{
+            lock (lockname) {
                 confirmationMessages++;
-			}
-			finally
-			{
-				Monitor.Exit(lockname);
-			}
+            }
 		}
 
 		/// <summary>
@@ -151,13 +145,13 @@ namespace GMS_CSharp_Server
         {
             Thread.Sleep(60);       
             while(lobbyStatus != "READY" && !myToken.IsCancellationRequested) 
-            {
-				Console.WriteLine("Cf" + confirmationMessages);
+            {				
 				Monitor.Enter(lockname);
                 try {
                     if (LobbyClients != null && confirmationMessages == maxClients)
                     {
-                        lobbyStatus = "READY";
+						Console.WriteLine("Cf" + confirmationMessages);
+						lobbyStatus = "READY";
                         myServer?.UpdateLobbyListReady(this);
 
                         int colorCombination = rnd.Next(1, 5),
