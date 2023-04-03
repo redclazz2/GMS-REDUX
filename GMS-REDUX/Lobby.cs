@@ -12,7 +12,8 @@ namespace GMS_CSharp_Server
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 1;
+        public int maxClients = 2;
+        public int confirmationMessages = 0;
 
         Random rnd = new();
         object lockname = new();
@@ -59,6 +60,7 @@ namespace GMS_CSharp_Server
                     //Tells the player they're joning a new lobby
                     sendLobbyData(6);
                     LobbyClients?.Add(player);
+                    AddConfirmationMessageValue();
                 }
                 else
                 {
@@ -93,7 +95,9 @@ namespace GMS_CSharp_Server
                     }
 
                     player.SendMessage(buffer2); //SENDS IT
-                }
+
+					LobbyClients?.Add(player);
+				}
             }
 
 			void sendLobbyData(UInt16 constant_out) 
@@ -124,17 +128,33 @@ namespace GMS_CSharp_Server
             }
         }
 
-        /// <summary>
-        /// Generates Teams And Starts the Match
-        /// </summary>
-        public void SortTeams(CancellationToken myToken) 
+		/// <summary>
+		/// Adds one to the confirmation message variable
+		/// </summary>
+		public void AddConfirmationMessageValue()
+		{
+			Monitor.Enter(lockname);
+			try
+			{
+                confirmationMessages++;
+			}
+			finally
+			{
+				Monitor.Exit(lockname);
+			}
+		}
+
+		/// <summary>
+		/// Generates Teams And Starts the Match
+		/// </summary>
+		public void SortTeams(CancellationToken myToken) 
         {
             Thread.Sleep(60);
             while(lobbyStatus != "READY" && !myToken.IsCancellationRequested) 
             {
                 Monitor.Enter(lockname);
                 try {
-                    if (LobbyClients != null && LobbyClients.Count == maxClients)
+                    if (LobbyClients != null && confirmationMessages == maxClients)
                     {
                         lobbyStatus = "READY";
                         myServer?.UpdateLobbyListReady(this);

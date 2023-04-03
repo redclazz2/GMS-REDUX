@@ -220,12 +220,7 @@ namespace GMS_CSharp_Server
                             {
                                 //Confirm responses by client
                                 Console.WriteLine("Updating Lobby Information for: " + ClientIPAddress);
-                                GameLobby?.AddConfPlayer(this);
-
-                                BufferStream buffer = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
-                                buffer.Seek(0);
-                                buffer.Write((UInt16)13);
-                                SendMessage(buffer);
+                                GameLobby?.AddConfirmationMessageValue();
                                 break;
                             }
 
