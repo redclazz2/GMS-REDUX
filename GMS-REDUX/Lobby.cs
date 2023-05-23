@@ -12,7 +12,7 @@ namespace GMS_CSharp_Server
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 2;
+        public int maxClients = 3;
         public int confirmationMessages = 0;
 
         Random rnd = new();
@@ -151,6 +151,9 @@ namespace GMS_CSharp_Server
                 try {
                     if (LobbyClients != null && confirmationMessages == maxClients)
                     {
+
+                        Thread.Sleep(3000);
+
 						Console.WriteLine("Cf" + confirmationMessages);
 						lobbyStatus = "READY";
                         myServer?.UpdateLobbyListReady(this);
