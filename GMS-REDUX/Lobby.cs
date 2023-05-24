@@ -58,6 +58,7 @@ namespace GMS_CSharp_Server
                 if (player.ClientNumber == 1)
                 {
                     //Tells the player they're joning a new lobby
+                    player.p2pConnected = true;
                     sendLobbyData(6);
                     LobbyClients?.Add(player);
                     AddConfirmationMessageValue();
@@ -149,12 +150,12 @@ namespace GMS_CSharp_Server
             {				
 				Monitor.Enter(lockname);
                 try {
-                    if (LobbyClients != null && confirmationMessages == maxClients)
+                    if (LobbyClients != null && LobbyClients.All(SocketHelper => SocketHelper.p2pConnected == true) && LobbyClients.Count == maxClients)
                     {
 
                         Thread.Sleep(3000);
 
-						Console.WriteLine("Cf" + confirmationMessages);
+						Console.WriteLine("SORTING TEAMS!");
 						lobbyStatus = "READY";
                         myServer?.UpdateLobbyListReady(this);
 

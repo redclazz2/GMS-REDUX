@@ -23,8 +23,7 @@ namespace GMS_CSharp_Server
 
         public bool IsSearching;
         public bool IsIngame;
-        //public int team;
-        //public int teamPos;
+        public bool p2pConnected;
 		public int ClientNumber;
 
 		object lockname = new();
@@ -45,6 +44,7 @@ namespace GMS_CSharp_Server
             ClientIPAddress = format?[0];
             ClientPort = format?[1];
             ParentServer = server;
+            p2pConnected = false;
 
             //Starts a read thread.
             ReadThread = new Thread(new ThreadStart(delegate
@@ -220,7 +220,8 @@ namespace GMS_CSharp_Server
                             {
                                 //Confirm responses by client
                                 Console.WriteLine("Updating Lobby Information for: " + ClientIPAddress);
-                                GameLobby?.AddConfirmationMessageValue();
+                                p2pConnected= true;
+                                //GameLobby?.AddConfirmationMessageValue();
                                 break;
                             }
 
