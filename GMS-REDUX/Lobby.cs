@@ -249,8 +249,12 @@ namespace GMS_CSharp_Server
         /// </summary>
         public static void WriteClientIpPortBuffer(SocketHelper client, BufferStream buffer)
         {
-            buffer?.Write(client?.ClientIPAddress);
-            buffer?.Write(client?.ClientUDPPort);
+            var ip = client.ClientIPAddress;
+            var port = client.ClientPort;
+
+            if (ip != null) { buffer?.Write(ip); }
+            if (port != null) { buffer?.Write(port); }
+            else { buffer?.Write(8056); }
         }
     }
 }
