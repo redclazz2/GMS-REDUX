@@ -250,7 +250,7 @@ namespace GMS_CSharp_Server
         public static void WriteClientIpPortBuffer(SocketHelper client, BufferStream buffer)
         {
             var ip = client.ClientIPAddress;
-            var port = client.ClientPort;
+            var port = client.ClientUDPPort;
 
             if (ip != null) { buffer?.Write(ip); }
             if (port != null) { buffer?.Write(port); }
