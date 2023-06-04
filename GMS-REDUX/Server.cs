@@ -185,7 +185,7 @@ namespace GMS_CSharp_Server
                         {
                             Lobby current = WaitingLobbies[count];
 
-							if (current.lobbyStatus == "WAITING")
+							if (current.lobbyStatus == "WAITING" && current.LobbyClients.Count < 8)
                             {
                                 current.AddNonConfPlayer(SearchingClients.Dequeue());
                                 count = WaitingLobbies.Count + 1;

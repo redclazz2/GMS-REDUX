@@ -12,7 +12,7 @@ namespace GMS_CSharp_Server
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 3;
+        public int maxClients = 2;
         public int confirmationMessages = 0;
 
         Random rnd = new();
@@ -153,7 +153,7 @@ namespace GMS_CSharp_Server
                     if (LobbyClients != null && LobbyClients.All(SocketHelper => SocketHelper.p2pConnected == true) && LobbyClients.Count == maxClients)
                     {
 
-                        Thread.Sleep(3000);
+                        Thread.Sleep(4500);
 
 						Console.WriteLine("SORTING TEAMS!");
 						lobbyStatus = "READY";
@@ -204,7 +204,12 @@ namespace GMS_CSharp_Server
                         buff.Write(json);
 
                         foreach(SocketHelper client in LobbyClients)
-                            client.SendMessage(buff);
+                        {
+                            client.p2pConnected = false;
+							client.SendMessage(buff);
+						}
+
+                        lobbyStatus = "WAITING";
                     }		
                 }
                 finally { Monitor.Exit(lockname); }           

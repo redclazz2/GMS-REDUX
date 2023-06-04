@@ -220,7 +220,7 @@ namespace GMS_CSharp_Server
                             {
                                 //Confirm responses by client
                                 Console.WriteLine("Updating Lobby Information for: " + ClientIPAddress);
-                                p2pConnected= true;
+                                p2pConnected = true;
                                 //GameLobby?.AddConfirmationMessageValue();
                                 break;
                             }
