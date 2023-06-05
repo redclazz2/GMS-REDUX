@@ -130,6 +130,22 @@ namespace GMS_CSharp_Server
         }
 
 		/// <summary>
+		/// This function checks if the ammount of players in the lobby is lower than
+		/// max. If that's the case, the lobby will be re-added to waiting list in server class.
+		/// </summary>
+
+		public void CheckForWaitingRegistry()
+		{
+			lock (lockname)
+			{
+                if(LobbyClients?.Count < maxClients)
+                {
+                    myServer?.UpdateLobbyListRedo(this);
+				}
+			}
+		}
+
+		/// <summary>
 		/// Adds one to the confirmation message variable
 		/// </summary>
 		public void AddConfirmationMessageValue()

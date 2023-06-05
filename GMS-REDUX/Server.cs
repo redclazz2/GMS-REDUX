@@ -7,9 +7,13 @@ namespace GMS_CSharp_Server
     public class Server
     {
         public List<SocketHelper>? Clients;
-        public List<Lobby>? Lobbies;
-        public List<Lobby>? WaitingLobbies;
-        public List<Lobby>? ReadyLobbies;
+        //public List<Lobby>? Lobbies;
+        //public List<Lobby>? WaitingLobbies;
+        //public List<Lobby>? ReadyLobbies;
+
+        public Dictionary<int, Lobby>? Lobbies;
+        public Dictionary<int, Lobby>? WaitingLobbies;
+
         public Queue<SocketHelper>? SearchingClients;
         Thread? TCPThread;
         Thread? UDPThread;
@@ -28,10 +32,10 @@ namespace GMS_CSharp_Server
         {
             //Creates a client list.
             Clients = new List<SocketHelper>();
-            Lobbies = new List<Lobby>();
-            ReadyLobbies= new List<Lobby>();
+            Lobbies = new Dictionary<int,Lobby>();
+            //ReadyLobbies= new List<Lobby>();
             SearchingClients = new Queue<SocketHelper>();
-            WaitingLobbies = new List<Lobby>();
+            WaitingLobbies = new Dictionary<int,Lobby>();
 
             //Starts a listen thread to listen for connections.
             TCPThread = new Thread(new ThreadStart(delegate
@@ -72,10 +76,6 @@ namespace GMS_CSharp_Server
         {
             myCancelSource.Cancel();
 
-            //TCPListener?.Stop();
-            //TCPThread?.Interrupt();
-            //MatchmakingThread?.Interrupt();
-
             if(Clients != null)
                 foreach (SocketHelper client in Clients)
                 {
@@ -88,7 +88,7 @@ namespace GMS_CSharp_Server
             Lobbies?.Clear();
             SearchingClients?.Clear();
             WaitingLobbies?.Clear();
-            ReadyLobbies?.Clear();
+            //ReadyLobbies?.Clear();
         }
 
         /// <summary>
@@ -180,19 +180,18 @@ namespace GMS_CSharp_Server
                         CreateNewLobby(SearchingClients.Dequeue());
                     }
                     else
-                    {                        
-                        for(int count = 0; count < WaitingLobbies.Count; count++) 
+                    {                       
+                        foreach(KeyValuePair<int,Lobby> entry in WaitingLobbies)
                         {
-                            Lobby current = WaitingLobbies[count];
+							Lobby current = entry.Value;
 
-							if (current.lobbyStatus == "WAITING" && current.LobbyClients.Count < 8)
-                            {
-                                current.AddNonConfPlayer(SearchingClients.Dequeue());
-                                count = WaitingLobbies.Count + 1;
-                            }
-                            
-                        }
-                    }
+							if (current.lobbyStatus == "WAITING" && current.LobbyClients?.Count < current.maxClients)
+							{
+							    current.AddNonConfPlayer(SearchingClients.Dequeue());
+                                break;
+							}
+						}
+					}
 				}
             }
 			Console.WriteLine("Matchmaking Thread has been cancelled on main server!");
@@ -201,14 +200,14 @@ namespace GMS_CSharp_Server
             {
                 Console.WriteLine("\nCreating a new lobby...");
 
-                Lobby newLobby = new Lobby();
+                Lobby newLobby = new();
                 newLobby.SetupLobby(this);
                 newLobby.AddNonConfPlayer(client);
 
                 lock (lockname) 
                 {
-                    Lobbies?.Add(newLobby);
-                    WaitingLobbies.Add(newLobby);
+                    Lobbies?.Add(newLobby.lobbyId,newLobby);
+                    WaitingLobbies.Add(newLobby.lobbyId,newLobby);
                 }
             }
         }
@@ -231,30 +230,46 @@ namespace GMS_CSharp_Server
         {
             lock (lockname) 
             {
-                Lobbies?.Remove(lobby);
-                if (WaitingLobbies != null && WaitingLobbies.Contains(lobby)) WaitingLobbies?.Remove(lobby);
-                else ReadyLobbies?.Remove(lobby);
+                Lobbies?.Remove(lobby.lobbyId);
+                if (WaitingLobbies != null && WaitingLobbies.ContainsKey(lobby.lobbyId)) WaitingLobbies?.Remove(lobby.lobbyId);
+                //else ReadyLobbies?.Remove(lobby);
 
                 Console.WriteLine("Lobby: " + lobby.lobbyId + " Has been removed from server's lists.");
             }
         }
 
         /// <summary>
-        /// Properly moves a lobby from the waiting list to the ready list
+        /// Properly moves a lobby from the waiting list
         /// </summary>
         public void UpdateLobbyListReady(Lobby lobby) 
         {
             lock (lockname) 
             {
-                WaitingLobbies?.Remove(lobby);
-                ReadyLobbies?.Add(lobby);
+                WaitingLobbies?.Remove(lobby.lobbyId);
+                //ReadyLobbies?.Add(lobby);
             }
         }
 
-        /// <summary>
-        /// This function sends a ping signal to all clients every 5 seconds.
-        /// </summary>
-        public void SendPingToAllClients(CancellationToken myToken)
+
+		/// <summary>
+		/// Properly registers lobby in waiting list
+		/// </summary>
+		public void UpdateLobbyListRedo(Lobby lobby)
+		{
+			lock (lockname)
+			{
+                if (!WaitingLobbies.ContainsKey(lobby.lobbyId))
+                {
+					WaitingLobbies?.Add(lobby.lobbyId,lobby);
+					//ReadyLobbies?.Remove(lobby);
+				}			
+			}
+		}
+
+		/// <summary>
+		/// This function sends a ping signal to all clients every 5 seconds.
+		/// </summary>
+		public void SendPingToAllClients(CancellationToken myToken)
 		{
             while (!myToken.IsCancellationRequested){
 				Thread.Sleep(6000);
@@ -263,6 +278,7 @@ namespace GMS_CSharp_Server
                 buffer.Write((UInt16)0);
                 SendToAllClients(buffer);
                 Console.WriteLine("Ping sent to all clients!");
+                Console.WriteLine($"Total Lobbys: {Lobbies.Count}.\nWaiting Lobbies: {WaitingLobbies.Count}.");
             }
 			Console.WriteLine("Ping Thread has been cancelled on main server!");
 		}
