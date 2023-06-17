@@ -12,7 +12,7 @@ namespace GMS_CSharp_Server
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 2;
+        public int maxClients = 1;
         public int confirmationMessages = 0;
 
         Random rnd = new();
@@ -176,7 +176,7 @@ namespace GMS_CSharp_Server
                         myServer?.UpdateLobbyListReady(this);
 
                         int colorCombination = rnd.Next(1, 5),
-                            musicToPlay = rnd.Next(1, 3),
+                            musicToPlay = rnd.Next(1, 4),
                             counterTeam1 = 0, counterTeam2 = 0, selector = 0,
                             selectedTeam = 0, selectedPosition = 0, currentTeamDiff = 0;
 
