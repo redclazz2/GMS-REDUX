@@ -12,7 +12,7 @@ namespace GMS_CSharp_Server
         public int lobbyId;
         public String? lobbyStatus;
         public Server? myServer;
-        public int maxClients = 1;
+        public int maxClients = 2;
         public int confirmationMessages = 0;
 
         Random rnd = new();
