@@ -14,11 +14,25 @@ namespace GMS_CSharp_Server
         public Server? myServer;
         public int maxClients = 2;
         public int confirmationMessages = 0;
+        public int lastColorCombination = 0;
 
         Random rnd = new();
         object lockname = new();
 
 		CancellationTokenSource myCancelSource = new();
+
+		private static Random rng = new Random();
+
+		public static void Shuffle<T>(List<T> list)
+		{
+			int n = list.Count;
+			while (n > 1)
+			{
+				n--;
+				int k = rng.Next(n + 1);
+				(list[n], list[k]) = (list[k], list[n]);
+			}
+		}
 
 		/// <summary>
 		/// Lobby's Variables and Lists Init
@@ -180,7 +194,16 @@ namespace GMS_CSharp_Server
                             counterTeam1 = 0, counterTeam2 = 0, selector = 0,
                             selectedTeam = 0, selectedPosition = 0, currentTeamDiff = 0;
 
-                        BufferStream buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
+                        while(colorCombination == lastColorCombination)
+                        {
+                            colorCombination = rnd.Next(1,5);
+                        }
+
+                        lastColorCombination = colorCombination;
+
+                        Shuffle(LobbyClients);
+
+						BufferStream buff = new BufferStream(NetworkConfig.BufferSize, NetworkConfig.BufferAlignment);
 						
                         buff.Seek(0);
 						buff.Write((UInt16)15);
